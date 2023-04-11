@@ -55,6 +55,7 @@ USERCMD UserCmds[] =
 };
 
 int iLoadedDamageAdjusts = 0;
+bool booEnableSnacClassic = false; // brac3r - False for disable, True for enable. Set to false for purpose of using it as an event prize 
 
 map<uint, DamageMultiplier> mapDamageAdjust;
 
@@ -120,6 +121,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 // Command-Option-X-O
 bool UserCmd_SnacClassic(uint iClientID, const wstring &wscCmd, const wstring &wscParam, const wchar_t *usage)
 {
+	// brac3r - Check for our flag (booEnableSnacClassic), if set to false we will send a message and return. If flag is true then business as usual
+	if (booEnableSnacClassic == false)
+	{
+		PrintUserCmdText(iClientID, L"On this server the classic snac is a prize only");
+		return true;
+	}
+
 	uint baseID = 0;
 	pub::Player::GetBase(iClientID, baseID);
 	if (!baseID)

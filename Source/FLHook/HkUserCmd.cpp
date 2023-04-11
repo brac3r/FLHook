@@ -514,7 +514,7 @@ void UserCmd_ID(uint iClientID, const wstring &wscParam)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
+// brac3r - Uncommented from original, works 90% of the time all the time and my players like it
 void UserCmd_InviteID(uint iClientID, const wstring &wscParam)
 {
 	wstring wscError[] =
@@ -552,7 +552,7 @@ void UserCmd_InviteID(uint iClientID, const wstring &wscParam)
 	cIDTo.iID = 0x00010001;
 	Server.SubmitChat(cID, iRet, szBuf, cIDTo, -1);
 }
-*/
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -644,10 +644,10 @@ USERCMD UserCmds[] =
 	//{ L"/autobuy",				UserCmd_AutoBuy},
 	{ L"/ids",					UserCmd_IDs},
 	{ L"/id",					UserCmd_ID},
-	//{ L"/i",					UserCmd_InviteID},
-	  //{ L"/i$",					UserCmd_InviteID},
-	//{ L"/invite",				UserCmd_InviteID},
-	  //{ L"/invite$",				UserCmd_InviteID},
+	{ L"/i",					UserCmd_InviteID},
+	  { L"/i$",					UserCmd_InviteID},
+	{ L"/invite",				UserCmd_InviteID},
+	  { L"/invite$",				UserCmd_InviteID},
 	  { L"/credits",				UserCmd_Credits},
 	  { L"/help",					UserCmd_Help},
 };

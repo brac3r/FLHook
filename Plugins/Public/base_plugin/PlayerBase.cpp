@@ -531,7 +531,8 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 
 	
 	// Make base hostile if player is on the perma hostile list. First check so it overrides everything.
-	if (siege_mode || emulated_siege_mode)
+	/*if (siege_mode || emulated_siege_mode)
+	{
 		for (std::list<wstring>::const_iterator i = perma_hostile_tags.begin(); i != perma_hostile_tags.end(); ++i)
 		{
 			if (charname.find(*i) == 0)
@@ -539,6 +540,17 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 				return -1.0;
 			}
 		}
+	}*/
+		
+
+	// brac3r - Actually make base hostile if player on the perma hostile list. Above check I commented out only does so during a siege
+	for (std::list<wstring>::const_iterator i = perma_hostile_tags.begin(); i != perma_hostile_tags.end(); ++i)
+	{
+		if (charname.find(*i) == 0)
+		{
+			return -1.0;
+		}
+	}
 
 	// Make base friendly if player is on the friendly list.
 	for (std::list<wstring>::const_iterator i = ally_tags.begin(); i != ally_tags.end(); ++i)
@@ -550,7 +562,13 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 	}
 
 	// Make base hostile if player is on the hostile list.
-	if (!emulated_siege_mode && hostile_tags.find(charname) != hostile_tags.end())
+	/*if (!emulated_siege_mode && hostile_tags.find(charname) != hostile_tags.end())
+	{
+		return -1.0;
+	}*/
+
+	// brac3r - Actually make base hostile if player on the hostile list. Above check I commented out only does so during a siege
+	if (hostile_tags.find(charname) != hostile_tags.end())
 	{
 		return -1.0;
 	}
@@ -569,9 +587,22 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 	}
 
 	// if defense mode 3, at this point if player doesn't match any criteria, give him fireworks
-	if ((siege_mode || emulated_siege_mode) && defense_mode == 3)
+	/*if ((siege_mode || emulated_siege_mode) && defense_mode == 3)
 	{
 		return -1.0;
+	}*/
+
+	// brac3r - Above check (commented out) does not give fireworks. This one does.
+	if (defense_mode == 3)
+	{
+		return -1.0;
+	}
+
+	// brac3r - restored following check so that defense mode 4/5 work as advertised
+	// for defense modes 4 and 5, apply neutral rep
+	if (defense_mode == 4 || defense_mode == 5)
+	{
+		return 0.0;
 	}
 
 	// at this point, we've ran all the checks, so we can do the IFF stuff.
