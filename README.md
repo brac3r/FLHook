@@ -34,6 +34,9 @@ How I got it working
 
 Changelog
 -------
+v1.11
+12/04/2023: Fixed defense modes 1/2 to do what they say (removed siege only bad rep)
+
 v1.1
 12/04/2023: Non-RP server configs added. (including base.cfg food fix)
 

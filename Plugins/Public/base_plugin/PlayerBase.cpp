@@ -606,6 +606,22 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 	}
 
 	// at this point, we've ran all the checks, so we can do the IFF stuff.
+	//if (defense_mode == 1 || defense_mode == 2)
+	//{
+	//	// If an affiliation is defined then use the player's attitude.
+	//	if (affiliation)
+	//	{
+	//		int rep;
+	//		pub::Player::GetRep(client, rep);
+	//		pub::Reputation::GetGroupFeelingsTowards(rep, affiliation, attitude);
+
+	//		if (attitude > 0 || siege_mode || emulated_siege_mode)
+	//			return attitude;
+	//	}
+	//}
+
+	// brac3r - restored following check so that defense mode 1/2 work as advertised.
+	// for defense modes 1/2, apply IFF rep
 	if (defense_mode == 1 || defense_mode == 2)
 	{
 		// If an affiliation is defined then use the player's attitude.
@@ -615,8 +631,7 @@ float PlayerBase::GetAttitudeTowardsClient(uint client, bool emulated_siege_mode
 			pub::Player::GetRep(client, rep);
 			pub::Reputation::GetGroupFeelingsTowards(rep, affiliation, attitude);
 
-			if (attitude > 0 || siege_mode || emulated_siege_mode)
-				return attitude;
+			return attitude;
 		}
 	}
 
