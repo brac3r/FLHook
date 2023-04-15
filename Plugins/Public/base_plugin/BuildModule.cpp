@@ -114,8 +114,8 @@ bool BuildModule::Timer(uint time)
 				{
 				case Module::TYPE_CORE:
 					base->base_level++;
-					if (base->base_level > 4)
-						base->base_level = 4;
+					if (base->base_level > 5)
+						base->base_level = 5; //brac3r - change to player bases to make core limit 5 
 					base->SetupDefaults();
 
 					// Clear the build module slot.

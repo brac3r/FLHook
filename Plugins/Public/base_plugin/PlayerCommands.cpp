@@ -1192,7 +1192,7 @@ namespace PlayerCommands
 
 			if (type == Module::TYPE_CORE)
 			{
-				if (base->base_level >= 4)
+				if (base->base_level >= 5) //brac3r - change to player bases to make core limit 5 
 				{
 					PrintUserCmdText(client, L"ERR Upgrade not available");
 					return;
