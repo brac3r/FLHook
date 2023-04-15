@@ -34,6 +34,10 @@ How I got it working
 
 Changelog
 -------
+
+v1.12
+14/04/2023: Base core limit now 5
+
 v1.11
 12/04/2023: Fixed defense modes 1/2 to do what they say (removed siege only bad rep)
 
