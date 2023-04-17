@@ -4,7 +4,7 @@ FLHook Discovery 3.1.0 (PlaYsiA server mod)
 Thanks to
 -------
 
-All of the Discovery Developers over the year for this great mod.
+All of the Discovery Developers over the years for this great mod.
 All of the Discovery Developers who have helped me get stuff working.
 
 
@@ -35,20 +35,24 @@ How I got it working
 Changelog
 -------
 
+v1.13
+Can use nomad gear (except cloaks), on all IDs.
+Added restarts to the configs
+
 v1.12
-14/04/2023: Base core limit now 5
+Base core limit now 5
 
 v1.11
-12/04/2023: Fixed defense modes 1/2 to do what they say (removed siege only bad rep)
+Fixed defense modes 1/2 to do what they say (removed siege only bad rep)
 
 v1.1
-12/04/2023: Non-RP server configs added. (including base.cfg food fix)
+Non-RP server configs added. (including base.cfg food fix)
 
 v1.0
-11/04/2023: Re-enabled /invite$ and /i$
-11/04/2023: Disabled /snacclassic
-11/04/2023: Changed base defensemode to do as it says. (took out changes made on RP server because they had a griefing problem)
-11/04/2023: Applied shield damage fix (thanks Aingar)
+Re-enabled /invite$ and /i$
+Disabled /snacclassic
+Changed base defensemode to do as it says. (took out changes made on RP server because they had a griefing problem)
+Applied shield damage fix (thanks Aingar)
 
 
 Original Below:
