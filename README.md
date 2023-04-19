@@ -35,6 +35,9 @@ How I got it working
 Changelog
 -------
 
+v1.14
+Base core limit can now be changed via the config file
+
 v1.13
 Can use nomad gear (except cloaks), on all IDs.
 Added restarts to the configs
