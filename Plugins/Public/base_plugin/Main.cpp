@@ -74,6 +74,9 @@ string set_status_path_json;
 /// Damage to the base every tick
 uint set_damage_per_tick = 600;
 
+/// Maximum core level
+uint max_core_level;
+
 /// Damage multiplier for damaged/abandoned stations
 /// In case of overlapping modifiers, only the first one specified in .cfg file will apply
 list<WEAR_N_TEAR_MODIFIER> wear_n_tear_mod_list;
@@ -457,6 +460,12 @@ void LoadSettingsActual()
 					else if (ini.is_value("damage_per_tick"))
 					{
 						set_damage_per_tick = ini.get_value_int(0);
+					}
+					else if (ini.is_value("max_core_level")) // brac3r - Get maximum core level from config
+					{
+						max_core_level = ini.get_value_int(0);
+
+						ConPrint(L"BASE_PLUGIN -> base.cfg -> max_core_level = %x\n", max_core_level);
 					}
 					else if (ini.is_value("damage_multiplier"))
 					{

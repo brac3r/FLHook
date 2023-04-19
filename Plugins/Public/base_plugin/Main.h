@@ -613,6 +613,9 @@ extern uint set_damage_per_10sec;
 /// Damage to the base every tick
 extern uint set_damage_per_tick;
 
+/// Maximum core level
+extern uint max_core_level;
+
 /// Damage multiplier for damaged/abandoned stations
 /// In case of overlapping modifiers, only the first one specified in .cfg file will apply
 extern list<WEAR_N_TEAR_MODIFIER> wear_n_tear_mod_list;
