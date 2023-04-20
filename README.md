@@ -35,6 +35,10 @@ How I got it working
 Changelog
 -------
 
+v1.16
+New racing restart, has 2 starbeams and neutral rep with zoners
+/restart ZoneRacer
+
 v1.15
 New flhook command setallrep
 Usage: setallrep <charname> <value>
