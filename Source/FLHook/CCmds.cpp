@@ -221,6 +221,25 @@ void CCmds::CmdSetRep(const wstring &wscCharname, const wstring &wscRepGroup, fl
 		PrintError();
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// brac3r - Set all player rep in one easy command
+// Usage: setallrep <charname> <value>
+// value should be between -1 and 1
+// ie: to set all green command would be setallrep bob 0.9
+// to set all neutral would be setallrep bob 0
+
+void CCmds::CmdSetAllRep(const wstring &wscCharname, float fValue)
+{
+	RIGHT_CHECK(RIGHT_REPUTATION);
+
+	if (HKSUCCESS(HkSetAllRep(wscCharname, fValue)))
+		Print(L"Success: Set all Rep to %f\n", fValue);
+	else
+		PrintError();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CCmds::CmdGetRep(const wstring &wscCharname, const wstring &wscRepGroup)
@@ -804,6 +823,7 @@ void CCmds::CmdHelp()
 		L"beam <charname> <basename>\n"
 		L"kill <charname>\n"
 		L"resetrep <charname>\n"
+		L"setallrep <charname> <value>\n"
 		L"setrep <charname> <repgroup> <value>\n"
 		L"getrep <charname> <repgroup>\n"
 		L"readcharfile <charname>\n"
@@ -1110,6 +1130,9 @@ void CCmds::ExecuteCommandString(const wstring &wscCmdStr)
 			}
 			else if (IS_CMD("setrep")) {
 				CmdSetRep(ArgCharname(1), ArgStr(2), ArgFloat(3));
+			}
+			else if (IS_CMD("setallrep")) { // brac3r - setallrep command, sets all (player) reps to the value
+				CmdSetAllRep(ArgCharname(1), ArgFloat(2));
 			}
 			else if (IS_CMD("getrep")) {
 				CmdGetRep(ArgCharname(1), ArgStr(2));

@@ -624,6 +624,7 @@ EXPORT HK_ERROR HkGetReservedSlot(const wstring &wscCharname, bool &bResult);
 EXPORT HK_ERROR HkSetReservedSlot(const wstring &wscCharname, bool bReservedSlot);
 //EXPORT void HkPlayerAutoBuy(uint iClientID, uint iBaseID);
 EXPORT HK_ERROR HkResetRep(const wstring &wscCharname);
+EXPORT HK_ERROR HkSetAllRep(const wstring &wscCharname, float fValue);
 EXPORT HK_ERROR HkGetGroupMembers(const wstring &wscCharname, list<GROUP_MEMBER> &lstMembers);
 EXPORT HK_ERROR HkSetRep(const wstring &wscCharname, const wstring &wscRepGroup, float fValue);
 EXPORT HK_ERROR HkGetRep(const wstring &wscCharname, const wstring &wscRepGroup, float &fValue);

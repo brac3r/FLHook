@@ -35,6 +35,13 @@ How I got it working
 Changelog
 -------
 
+v1.15
+New flhook command setallrep
+Usage: setallrep <charname> <value>
+value should be between -1 and 1
+ie: to set all green command would be setallrep bob 0.9
+to set all neutral would be setallrep bob 0
+
 v1.14
 Base core limit can now be changed via the config file
 

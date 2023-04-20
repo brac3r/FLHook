@@ -991,6 +991,55 @@ HK_ERROR HkResetRep(const wstring &wscCharname)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// brac3r - Set all player rep in one easy command
+// Usage: setallrep <charname> <value>
+// value should be between -1 and 1
+// ie: to set all green command would be setallrep bob 0.9
+// to set all neutral would be setallrep bob 0
+
+HK_ERROR HkSetAllRep(const wstring &wscCharname, float fValue)
+{
+	// brac3r - taking HKResetRep, but instead of setting to the values in mpnewcharacter.fl
+	// we put in our own (fValue)
+
+	HK_GET_CLIENTID(iClientID, wscCharname);
+
+	// check if logged in
+	if (iClientID == -1)
+		return HKE_PLAYER_NOT_LOGGED_IN;
+
+	INI_Reader ini;
+	if (!ini.open("mpnewcharacter.fl", false))
+		return HKE_MPNEWCHARACTERFILE_NOT_FOUND_OR_INVALID;
+
+	ini.read_header();
+	if (!ini.is_header("Player"))
+	{
+		ini.close();
+		return HKE_MPNEWCHARACTERFILE_NOT_FOUND_OR_INVALID;
+	}
+
+	int iPlayerRep;
+	pub::Player::GetRep(iClientID, iPlayerRep);
+	while (ini.read_value())
+	{
+		if (ini.is_value("house"))
+		{
+			//float fRep = ini.get_value_float(0);
+			const char *szRepGroupName = ini.get_value_string(1);
+
+			uint iRepGroupID;
+			pub::Reputation::GetReputationGroup(iRepGroupID, szRepGroupName);
+			pub::Reputation::SetReputation(iPlayerRep, iRepGroupID, fValue);
+		}
+	}
+
+	ini.close();
+	return HKE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 HK_ERROR HkSetRep(const wstring &wscCharname, const wstring &wscRepGroup, float fValue)
 {
 	HK_GET_CLIENTID(iClientID, wscCharname);

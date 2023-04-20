@@ -490,6 +490,7 @@ IMPORT HK_ERROR HkGetReservedSlot(const wstring &wscCharname, bool &bResult);
 IMPORT HK_ERROR HkSetReservedSlot(const wstring &wscCharname, bool bReservedSlot);
 //IMPORT void HkPlayerAutoBuy(uint iClientID, uint iBaseID);
 IMPORT HK_ERROR HkResetRep(const wstring &wscCharname);
+IMPORT HK_ERROR HkSetAllRep(const wstring &wscCharname, float fValue);
 IMPORT HK_ERROR HkGetGroupMembers(const wstring &wscCharname, list<GROUP_MEMBER> &lstMembers);
 IMPORT HK_ERROR HkSetRep(const wstring &wscCharname, const wstring &wscRepGroup, float fValue);
 IMPORT HK_ERROR HkGetRep(const wstring &wscCharname, const wstring &wscRepGroup, float &fValue);

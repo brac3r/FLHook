@@ -59,6 +59,7 @@ public:
 	void CmdKill(const wstring &wscCharname);
 	void CmdResetRep(const wstring &wscCharname);
 	void CmdSetRep(const wstring &wscCharname, const wstring &wscRepGroup, float fValue);
+	void CmdSetAllRep(const wstring &wscCharname, float fValue);
 	void CmdGetRep(const wstring &wscCharname, const wstring &wscRepGroup);
 
 	void CmdMsg(const wstring &wscCharname, const wstring &wscText);
