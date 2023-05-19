@@ -33,7 +33,6 @@
 
 float DeathPenaltyFraction = 0;
 float DeathPenaltyFractionKiller = 0;
-vector<string> ExcludedSystems = {};
 map<string, float> FractionOverridesByShip = {};
 map<uint, CLIENT_DATA> MapClients;
 unordered_set<uint> ExcludedSystemsIds;
@@ -59,7 +58,15 @@ void LoadSettings()
 			{
 				while (ini.read_value())
 				{
-					if (ini.is_value("excluded_system"))
+					if (ini.is_value("death_penalty_fraction"))
+					{
+						DeathPenaltyFraction = ini.get_value_float(0);
+					}
+					else if (ini.is_value("death_penalty_fraction_killer"))
+					{
+						DeathPenaltyFractionKiller = ini.get_value_float(0);
+					}
+					else if (ini.is_value("excluded_system"))
 					{
 						ExcludedSystemsIds.insert(CreateID(ini.get_value_string(0)));
 					}
