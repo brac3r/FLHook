@@ -529,6 +529,7 @@ bool __stdcall UserCmd_Process(uint iClientID, const wstring &wscCmd)
 int __stdcall DockCall(unsigned int const& ship, unsigned int const& d, const int& cancel,
     const enum DOCK_HOST_RESPONSE& response)
 {
+	returncode = DEFAULT_RETURNCODE;
 	uint client = HkGetClientIDByShip(ship);
 	if (client)
 	{
@@ -543,6 +544,7 @@ int __stdcall DockCall(unsigned int const& ship, unsigned int const& d, const in
  */
 void __stdcall DisConnect(uint client, const enum EFLConnection& state)
 {
+	returncode = DEFAULT_RETURNCODE;
 	processFFA(client);
 	ProcessDuel(client);
 }
@@ -552,6 +554,7 @@ void __stdcall DisConnect(uint client, const enum EFLConnection& state)
  */
 void CharacterInfoReq(uint client, const bool& p2)
 {
+	returncode = DEFAULT_RETURNCODE;
 	processFFA(client);
 	ProcessDuel(client);
 }
@@ -561,6 +564,7 @@ void CharacterInfoReq(uint client, const bool& p2)
  */
 void __stdcall SendDeathMessage( const std::wstring& message, const uint system, uint clientVictim, uint clientKiller)
 {
+	returncode = DEFAULT_RETURNCODE;
 	ProcessDuel(clientVictim);
 	processFFA(clientVictim);
 }
