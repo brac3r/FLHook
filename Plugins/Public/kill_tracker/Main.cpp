@@ -201,7 +201,7 @@ void __stdcall CharacterSelect(CHARACTER_ID const& cid, uint client)
 }
 
 
-bool __stdcall UserCmd_Process(uint client, const wstring &wscCmd)
+bool UserCmd_Process(uint client, const wstring &wscCmd)
 {
 	returncode = DEFAULT_RETURNCODE;
 

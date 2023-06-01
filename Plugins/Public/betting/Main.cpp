@@ -483,7 +483,7 @@ USERCMD UserCmds[] =
 	{L"/ffa", UserCmdStartFreeForAll, L"Create an ffa and send an invite to everyone in the system. Winner gets the pot."},
 };
 
-bool __stdcall UserCmd_Process(uint iClientID, const wstring &wscCmd)
+bool UserCmd_Process(uint iClientID, const wstring &wscCmd)
 {
 	returncode = DEFAULT_RETURNCODE;
 
