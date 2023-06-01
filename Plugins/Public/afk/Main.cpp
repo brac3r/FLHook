@@ -20,110 +20,119 @@
  * @paragraph ipc IPC Interfaces Exposed
  * This plugin does not expose any functionality.
  */
+#include <windows.h>
+#include <stdio.h>
+#include <string>
+#include <time.h>
+#include <math.h>
+#include <list>
+#include <map>
+#include <unordered_set>
+#include <algorithm>
+#include <FLHook.h>
+#include <plugin.h>
+#include <PluginUtilities.h>
+#include <hookext_exports.h>
 
-#include "Afk.h"
+unordered_set<uint> awayClients;
+PLUGIN_RETURNCODE returnCode;
 
-		std::vector<uint> awayClients;
-namespace Plugins::Afk
+/** @ingroup AwayFromKeyboard
+ * @brief This command is called when a player types /afk. It prints a message in red text to nearby players saying they are afk. It will also let anyone
+ * who messages them know too.
+ */
+bool UserCmdAfk(uint client, const wstring &cmd, const wstring &param, const wchar_t* usage)
 {
-	const std::unique_ptr<Global> global = std::make_unique<Global>();
+	awayClients.insert(client);
+	const std::wstring playerName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(client));
 
-	/** @ingroup AwayFromKeyboard
-	 * @brief This command is called when a player types /afk. It prints a message in red text to nearby players saying they are afk. It will also let anyone
-	 * who messages them know too.
-	 */
-	void UserCmdAfk(ClientId& client, [[maybe_unused]] const std::wstring& param)
+	uint systemId;
+	pub::Player::GetSystem(client, systemId);
+
+	const Universe::ISystem* iSys = Universe::get_system(systemId);
+	wstring sysname = stows(iSys->nickname);
+
+	HkMsgS(sysname.c_str(), playerName + L" is now away from keyboard.");
+	PrintUserCmdText(client, L"Use the /back command to stop sending automatic replies to PMs.");
+	return true;
+}
+
+/** @ingroup AwayFromKeyboard
+ * @brief This command is called when a player types /back. It removes the afk status and welcomes the player back.
+ * who messages them know too.
+ */
+bool UserCmdBack(uint client, const wstring &cmd, const wstring &param, const wchar_t* usage)
+{
+	if (awayClients.find(client) == awayClients.end())
 	{
-		global->awayClients.emplace_back(client);
-		const std::wstring playerName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(client));
-		const auto message = Hk::Message::FormatMsg(MessageColor::Red, MessageFormat::Normal, playerName + L" is now away from keyboard.");
-
-		const auto systemId = Hk::Player::GetSystem(client);
-
-		if (systemId.has_error())
-		{
-			PrintUserCmdText(client, Hk::Err::ErrGetText(systemId.error()));
-			return;
-		}
-
-		Hk::Message::FMsgS(systemId.value(), message);
-
-		PrintUserCmdText(client, L"Use the /back command to stop sending automatic replies to PMs.");
+		return;
 	}
 
-	/** @ingroup AwayFromKeyboard
-	 * @brief This command is called when a player types /back. It removes the afk status and welcomes the player back.
-	 * who messages them know too.
-	 */
-	void UserCmdBack(ClientId& client)
-	{
-		if (const auto it = global->awayClients.begin(); std::find(it, global->awayClients.end(), client) != global->awayClients.end())
-		{
-			const auto systemId = Hk::Player::GetSystem(client);
+	uint systemId;
+	pub::Player::GetSystem(client, systemId);
+	const Universe::ISystem* iSys = Universe::get_system(systemId);
+	wstring sysname = stows(iSys->nickname);
 
-			if (systemId.has_error())
-			{
-				PrintUserCmdText(client, Hk::Err::ErrGetText(systemId.error()));
-				return;
-			}
+	const std::wstring playerName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(client));
+	HkMsgS(sysname.c_str(), playerName + L" is now away from keyboard.");
 
-			global->awayClients.erase(it);
-			const std::wstring playerName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(client));
-			const auto message = Hk::Message::FormatMsg(MessageColor::Red, MessageFormat::Normal, playerName + L" has returned");
-			Hk::Message::FMsgS(systemId.value(), message);
-			return;
-		}
-	}
+	awayClients.erase(client);
+	return true;
+}
 
-	// Clean up when a client disconnects
-	void ClearClientInfo(ClientId& client)
-	{
-		auto [first, last] = std::ranges::remove(global->awayClients, client);
-		global->awayClients.erase(first, last);
-	}
+// Clean up when a client disconnects
+void ClearClientInfo(uint client)
+{
+	awayClients.erase(client);
+}
 
-	// Hook on chat being sent (This gets called twice with the client and to
-	// swapped
-	void Cb_SendChat(ClientId& client, ClientId& to, [[maybe_unused]] const uint& size, [[maybe_unused]] void** rdl)
-	{
-		if (std::ranges::find(global->awayClients, to) != global->awayClients.end())
-			PrintUserCmdText(client, L"This user is away from keyboard.");
-	}
+// Hook on chat being sent (This gets called twice with the client and to
+// swapped
+void __stdcall Cb_SendChat(uint client, uint to, const uint& size, void** rdl)
+{
+	if (awayClients.find(to) != awayClients.end())
+		PrintUserCmdText(client, L"This user is away from keyboard.");
+}
 
-	// Hooks on chat being submitted
-	void SubmitChat(ClientId& client, [[maybe_unused]] const unsigned long& lP1, [[maybe_unused]] void const** rdlReader, [[maybe_unused]] ClientId& to,
-	    [[maybe_unused]] const int& iP2)
-	{
-		if (const auto it = global->awayClients.begin();
-		    Hk::Client::IsValidClientID(client) && std::find(it, global->awayClients.end(), client) != global->awayClients.end())
-			UserCmdBack(client);
-	}
+// Hooks on chat being submitted
+void __stdcall SubmitChat(uint client, const unsigned long& lP1, void const** rdlReader, uint to,
+    const int& iP2)
+{
+	if (awayClients.find(client) !=awayClients.end())
+		UserCmdBack(client,L"",L"",L"");
+}
+typedef bool(*_UserCmdProc)(uint, const wstring &, const wstring &, const wchar_t*);
 
-	// Client command processing
-	const std::vector commands = {{
-	    CreateUserCommand(L"/afk", L"", UserCmdAfk, L"Sets your status to \"Away from Keyboard\". Other players will notified if they try to speak to you."),
-	    CreateUserCommand(L"/back", L"", UserCmdBack, L"Removes the AFK status."),
-	}};
-} // namespace Plugins::Afk
+struct USERCMD
+{
+	wchar_t *wszCmd;
+	_UserCmdProc proc;
+	wchar_t *usage;
+};
+
+USERCMD UserCmds[] =
+{
+	{ L"/afk", UserCmdAfk, L"Sets your status to \"Away from Keyboard\". Other players will notified if they try to speak to you." },
+	{ L"/back*", UserCmdBack, L"Removes the AFK status." },
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FLHOOK STUFF
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace Plugins::Afk;
-
-DefaultDllMain();
 // Functions to hook
-extern "C" EXPORT void ExportPluginInfo(PluginInfo* pi)
+
+EXPORT PLUGIN_INFO* Get_PluginInfo()
 {
-	pi->name("AFK");
-	pi->shortName("afk");
-	pi->mayUnload(true);
-	pi->commands(&commands);
-	pi->returnCode(&global->returnCode);
-	pi->versionMajor(PluginMajorVersion::VERSION_04);
-	pi->versionMinor(PluginMinorVersion::VERSION_00);
-	pi->emplaceHook(HookedCall::FLHook__ClearClientInfo, &ClearClientInfo, HookStep::After);
-	pi->emplaceHook(HookedCall::IChat__SendChat, &Cb_SendChat);
-	pi->emplaceHook(HookedCall::IServerImpl__SubmitChat, &SubmitChat);
+	PLUGIN_INFO* p_PI = new PLUGIN_INFO();
+
+	p_PI->sName ="AFK";
+	p_PI->sShortName ="afk";
+	p_PI->bMayUnload = true;
+	p_PI->ePluginReturnCode = &returnCode;
+	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&ClearClientInfo, PLUGIN_ClearClientInfo, 0));
+	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&Cb_SendChat, PLUGIN_HkCb_SendChat, 0));
+	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&SubmitChat, PLUGIN_HkIServerImpl_SubmitChat, 0));
+
+	return p_PI;
 }
