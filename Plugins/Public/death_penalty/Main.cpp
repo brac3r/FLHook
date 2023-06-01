@@ -321,7 +321,7 @@ void UserCmd_DP(uint client, const std::wstring& wscParam)
 	}
 }
 
-bool __stdcall UserCmd_Process(uint client, const std::wstring& wscParam)
+bool UserCmd_Process(uint client, const std::wstring& wscParam)
 {
 	if (wscParam.find(L"/dp") == 0)
 	{
