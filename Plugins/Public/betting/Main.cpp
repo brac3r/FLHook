@@ -343,7 +343,7 @@ bool UserCmd_Duel(uint client, const wstring &wscCmd, const wstring &wscParam, c
 	// Get the object the player is targetting
 	uint targetShip;
 	pub::SpaceObj::GetTarget(ship, targetShip);
-	if (targetShip)
+	if (!targetShip)
 	{
 		PrintUserCmdText(client, L"ERR No target");
 		return true;
@@ -526,8 +526,8 @@ bool UserCmd_Process(uint iClientID, const wstring &wscCmd)
 /** @ingroup Betting
  * @brief Hook for dock call. Treats a player as if they died if they were part of a duel
  */
-int __stdcall DockCall(unsigned int const& ship, unsigned int const& d, const int& cancel,
-    const enum DOCK_HOST_RESPONSE& response)
+int DockCall(unsigned int const& ship, unsigned int const& d, int cancel,
+    enum DOCK_HOST_RESPONSE response)
 {
 	returncode = DEFAULT_RETURNCODE;
 	uint client = HkGetClientIDByShip(ship);
@@ -542,7 +542,7 @@ int __stdcall DockCall(unsigned int const& ship, unsigned int const& d, const in
 /** @ingroup Betting
  * @brief Hook for disconnect. Treats a player as if they died if they were part of a duel
  */
-void __stdcall DisConnect(uint client, const enum EFLConnection& state)
+void __stdcall DisConnect(uint client, const enum EFLConnection state)
 {
 	returncode = DEFAULT_RETURNCODE;
 	processFFA(client);
@@ -552,7 +552,7 @@ void __stdcall DisConnect(uint client, const enum EFLConnection& state)
 /** @ingroup Betting
  * @brief Hook for char info request (F1). Treats a player as if they died if they were part of a duel
  */
-void CharacterInfoReq(uint client, const bool& p2)
+void __stdcall CharacterInfoReq(uint client, bool p2)
 {
 	returncode = DEFAULT_RETURNCODE;
 	processFFA(client);
@@ -562,7 +562,7 @@ void CharacterInfoReq(uint client, const bool& p2)
 /** @ingroup Betting
  * @brief Hook for death to kick player out of duel
  */
-void __stdcall SendDeathMessage( const std::wstring& message, const uint system, uint clientVictim, uint clientKiller)
+void SendDeathMessage( const std::wstring& message, uint system, uint clientVictim, uint clientKiller)
 {
 	returncode = DEFAULT_RETURNCODE;
 	ProcessDuel(clientVictim);

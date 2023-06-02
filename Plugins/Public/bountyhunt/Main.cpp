@@ -86,10 +86,10 @@ void PrintBountyHunts(uint& client)
 	if (bountyHunt.begin() != bountyHunt.end())
 	{
 		PrintUserCmdText(client, L"Offered Bounty Hunts:");
-		for (auto const& [targetId, initiatorId, target, initiator, cash, end] : bountyHunt)
+		for (auto const& bounty : bountyHunt)
 		{
 			PrintUserCmdText(
-			    client, std::format(L"Kill {} and earn {} credits ({} minutes left)", target, cash, ((end - Hk::Time::GetUnixSeconds()) / 60)));
+			    client, L"Kill %ls and earn %u credits (%u minutes left)", bounty.target.c_str(), bounty.cash, (uint)((bounty.end - GetTimeInMS()) * 1000 / 60));
 		}
 	}
 }
@@ -97,52 +97,54 @@ void PrintBountyHunts(uint& client)
 /** @ingroup BountyHunt
  * @brief User Command for /bountyhunt. Creates a bounty against a specified player.
  */
-void UserCmdBountyHunt(uint& client, const std::wstring& param)
+bool UserCmdBountyHunt(uint client, const std::wstring& cmd, const std::wstring& param, const wchar_t* usage)
 {
 	if (!enableBountyHunt)
-		return;
+		return false;
 
 	const std::wstring target = GetParam(param, ' ', 0);
-	const uint prize = ToUInt(GetParam(param, ' ', 1));
-	const std::wstring timeString = GetParam(param, ' ', 2);
+	const int prize = ToInt(GetParam(param, ' ', 1));
+	uint huntTime = ToUInt(GetParam(param, ' ', 2));
 	if (!target.length() || prize == 0)
 	{
 		PrintUserCmdText(client, L"Usage: /bountyhunt <playername> <credits> <time>");
 		PrintBountyHunts(client);
-		return;
+		return false;
 	}
 
-	uint time = wcstol(timeString.c_str(), nullptr, 10);
-	const auto targetId = Hk::Client::GetClientIdFromCharName(target);
+	const auto targetId = HkGetClientIdFromCharname(target);
 
-	int rankTarget = Hk::Player::GetRank(targetId.value()).value();
+	int rankTarget;
+	HkGetRank(target, rankTarget);
 
-	if (targetId == UINT_MAX || Hk::Client::IsInCharSelectMenu(targetId.value()))
+	if (targetId == UINT_MAX || HkIsInCharSelectMenu(targetId))
 	{
-		PrintUserCmdText(client, std::format(L"{} is not online.", target));
-		return;
+		PrintUserCmdText(client, L"%ls is not online.", target.c_str());
+		return false;
 	}
 
 	if (rankTarget < levelProtect)
 	{
 		PrintUserCmdText(client, L"Low level players may not be hunted.");
-		return;
+		return false;
 	}
 
 	// clamp the hunting time to configured range, or set default if not specified
-	if (time)
+	if (huntTime)
 	{
-		time = std::min(maximumHuntTime, std::max(minimalHuntTime, time));
+		huntTime = min(maximumHuntTime, max(minimalHuntTime, huntTime));
 	}
 	else
 	{
-		time = defaultHuntTime;
+		huntTime = defaultHuntTime;
 	}
 
-	if (uint clientCash = Hk::Player::GetCash(client).value(); clientCash < prize)
+	int clientCash;
+	pub::Player::InspectCash(client, clientCash);
+	if (clientCash < prize)
 	{
 		PrintUserCmdText(client, L"You do not possess enough credits.");
-		return;
+		return false;
 	}
 
 	for (const auto& bh : bountyHunt)
@@ -150,34 +152,35 @@ void UserCmdBountyHunt(uint& client, const std::wstring& param)
 		if (bh.initiatorId == client && bh.targetId == targetId)
 		{
 			PrintUserCmdText(client, L"You already have a bounty on this player.");
-			return;
+			return false;
 		}
 	}
 
-	Hk::Player::RemoveCash(client, prize);
+	pub::Player::AdjustCash(client, -prize);
 	const std::wstring initiator = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(client));
 
 	BountyHunt bh;
 	bh.initiatorId = client;
-	bh.end = Hk::Time::GetUnixMiliseconds() + (static_cast<mstime>(time) * 60000);
+	bh.end = GetTimeInMS() + (static_cast<mstime>(huntTime) * 60000);
 	bh.initiator = initiator;
 	bh.cash = prize;
 	bh.target = target;
-	bh.targetId = targetId.value();
+	bh.targetId = targetId;
 
 	bountyHunt.push_back(bh);
 
-	Hk::Message::MsgU(
-	    bh.initiator + L" offers " + std::to_wstring(bh.cash) + L" credits for killing " + bh.target + L" in " + std::to_wstring(time) + L" minutes.");
+	HkMsgU(
+	    bh.initiator + L" offers " + std::to_wstring(bh.cash) + L" credits for killing " + bh.target + L" in " + std::to_wstring(huntTime) + L" minutes.");
+	return true;
 }
 
 /** @ingroup BountyHunt
  * @brief User Command for /bountyhuntid. Creates a bounty against a specified player.
  */
-void UserCmdBountyHuntID(uint& client, const std::wstring& param)
+bool UserCmdBountyHuntID(uint client, const std::wstring& cmd, const std::wstring& param, const wchar_t* usage)
 {
 	if (!enableBountyHunt)
-		return;
+		return false;
 
 	const std::wstring target = GetParam(param, ' ', 0);
 	const std::wstring credits = GetParam(param, ' ', 1);
@@ -186,19 +189,20 @@ void UserCmdBountyHuntID(uint& client, const std::wstring& param)
 	{
 		PrintUserCmdText(client, L"Usage: /bountyhuntid <id> <credits> <time>");
 		PrintBountyHunts(client);
-		return;
+		return false;
 	}
 
-	ClientId clientTarget = ToInt(target);
-	if (!Hk::Client::IsValidClientID(clientTarget) || Hk::Client::IsInCharSelectMenu(clientTarget))
+	uint clientTarget = ToInt(target);
+	if (!HkIsValidClientID(clientTarget) || HkIsInCharSelectMenu(clientTarget))
 	{
 		PrintUserCmdText(client, L"Error: Invalid client id.");
-		return;
+		return false;
 	}
 
 	const std::wstring charName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(clientTarget));
 	const auto paramNew = std::wstring(charName + L" " + credits + L" " + time);
-	UserCmdBountyHunt(client, paramNew);
+	UserCmdBountyHunt(client, cmd, paramNew, usage);
+	return true;
 }
 
 /** @ingroup BountyHunt
@@ -206,19 +210,18 @@ void UserCmdBountyHuntID(uint& client, const std::wstring& param)
  */
 void BhTimeOutCheck()
 {
+	returnCode = DEFAULT_RETURNCODE;
+	if (time(0) % 60 != 0)
+		return;
+
 	auto bounty = bountyHunt.begin();
 
 	while (bounty != bountyHunt.end())
 	{
-		if (bounty->end < Hk::Time::GetUnixMiliseconds())
+		if (bounty->end < GetTimeInMS())
 		{
-			if (const auto cashError = Hk::Player::AddCash(bounty->target, bounty->cash); cashError.has_error())
-			{
-				Console::ConWarn(wstos(Hk::Err::ErrGetText(cashError.error())));
-				return;
-			}
-
-			Hk::Message::MsgU(bounty->target + L" was not hunted down and earned " + std::to_wstring(bounty->cash) + L" credits.");
+			pub::Player::AdjustCash(bounty->targetId, bounty->cash);
+			HkMsgU(bounty->target + L" was not hunted down and earned " + std::to_wstring(bounty->cash) + L" credits.");
 			bounty = bountyHunt.erase(bounty);
 		}
 		else
@@ -239,26 +242,18 @@ void BillCheck(uint& client, uint& killer)
 		{
 			if (killer == 0 || client == killer)
 			{
-				Hk::Message::MsgU(L"The hunt for " + bounty.target + L" still goes on.");
+				HkMsgU(L"The hunt for " + bounty.target + L" still goes on.");
 				continue;
 			}
-
-			if (std::wstring winnerCharacterName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(killer)); !winnerCharacterName.empty())
+			std::wstring winnerCharacterName = reinterpret_cast<const wchar_t*>(Players.GetActiveCharacterName(killer));
+			if (!winnerCharacterName.empty())
 			{
-				if (const auto cashError = Hk::Player::AddCash(winnerCharacterName, bounty.cash); cashError.has_error())
-				{
-					Console::ConWarn(wstos(Hk::Err::ErrGetText(cashError.error())));
-					return;
-				}
-				Hk::Message::MsgU(winnerCharacterName + L" has killed " + bounty.target + L" and earned " + std::to_wstring(bounty.cash) + L" credits.");
+				pub::Player::AdjustCash(killer, bounty.cash);
+				HkMsgU(winnerCharacterName + L" has killed " + bounty.target + L" and earned " + std::to_wstring(bounty.cash) + L" credits.");
 			}
 			else
 			{
-				if (const auto cashError = Hk::Player::AddCash(bounty.initiator, bounty.cash); cashError.has_error())
-				{
-					Console::ConWarn(wstos(Hk::Err::ErrGetText(cashError.error())));
-					return;
-				}
+				pub::Player::AdjustCash(bounty.initiatorId, bounty.cash);
 			}
 			RemoveBountyHunt(bounty);
 			BillCheck(killer, killer);
@@ -267,14 +262,12 @@ void BillCheck(uint& client, uint& killer)
 	}
 }
 
-// Timer Hook
-const std::vector<Timer> timers = {{BhTimeOutCheck, 60}};
-
 /** @ingroup BountyHunt
  * @brief Hook for SendDeathMsg to call BillCheck
  */
 void SendDeathMsg(const std::wstring& msg, uint system, uint clientVictim, uint clientKiller)
 {
+	returnCode = DEFAULT_RETURNCODE;
 	if (enableBountyHunt)
 	{
 		BillCheck(clientVictim, clientKiller);
@@ -287,12 +280,8 @@ void checkIfPlayerFled(uint& client)
 	{
 		if (it.targetId == client)
 		{
-			if (const auto cashError = Hk::Player::AddCash(it.initiator, it.cash); cashError.has_error())
-			{
-				Console::ConWarn(wstos(Hk::Err::ErrGetText(cashError.error())));
-				return;
-			}
-			Hk::Message::MsgU(L"The coward " + it.target + L" has fled. " + it.initiator + L" has been refunded.");
+			pub::Player::AdjustCash(it.initiatorId, it.cash);
+			HkMsgU(L"The coward " + it.target + L" has fled. " + it.initiator + L" has been refunded.");
 			RemoveBountyHunt(it);
 			return;
 		}
@@ -304,30 +293,106 @@ void checkIfPlayerFled(uint& client)
  */
 void __stdcall DisConnect(uint client, const enum EFLConnection state)
 {
+	returnCode = DEFAULT_RETURNCODE;
 	checkIfPlayerFled(client);
 }
 
 /** @ingroup BountyHunt
  * @brief Hook for CharacterSelect to see if the player had a bounty on them
  */
-void CharacterSelect(struct CHARACTER_ID const& cId, uint client)
+void __stdcall CharacterSelect(struct CHARACTER_ID const& cId, uint client)
 {
+	returnCode = DEFAULT_RETURNCODE;
 	checkIfPlayerFled(client);
 }
+typedef bool(*_UserCmdProc)(uint, const wstring &, const wstring &, const wchar_t*);
 
-// Client command processing
-const std::vector commands = {{
-    CreateUserCommand(L"/bountyhunt", L"<charname> <credits> [minutes]", UserCmdBountyHunt,
-        L"Places a bounty on the specified player. When another player kills them, they gain <credits>."),
-    CreateUserCommand(
-        L"/bountyhuntid", L"<id> <credits> [minutes]", UserCmdBountyHuntID, L"Same as above but with an id instead of a player name. Use /ids"),
-}};
+struct USERCMD
+{
+	wchar_t *wszCmd;
+	_UserCmdProc proc;
+	wchar_t *usage;
+};
+
+USERCMD UserCmds[] =
+{
+	{ L"/bountyhunt", UserCmdBountyHunt, L"Usage: /bountyhunt <name>" },
+	{ L"/bountyhuntid", UserCmdBountyHuntID, L"Usage: /bountyhuntid <id>" },
+};
+
+bool UserCmd_Process(uint iClientID, const wstring &wscCmd)
+{
+	returnCode = DEFAULT_RETURNCODE;
+
+	wstring wscCmdLineLower = ToLower(wscCmd);
+
+	// If the chat string does not match the USER_CMD then we do not handle the
+	// command, so let other plugins or FLHook kick in. We require an exact match
+	for (uint i = 0; (i < sizeof(UserCmds) / sizeof(USERCMD)); i++)
+	{
+
+		if (wscCmdLineLower.find(UserCmds[i].wszCmd) == 0)
+		{
+			// Extract the parameters string from the chat string. It should
+			// be immediately after the command and a space.
+			wstring wscParam = L"";
+			if (wscCmd.length() > wcslen(UserCmds[i].wszCmd))
+			{
+				if (wscCmd[wcslen(UserCmds[i].wszCmd)] != ' ')
+					continue;
+				wscParam = wscCmd.substr(wcslen(UserCmds[i].wszCmd) + 1);
+			}
+
+			// Dispatch the command to the appropriate processing function.
+			if (UserCmds[i].proc(iClientID, wscCmd, wscParam, UserCmds[i].usage))
+			{
+				// We handled the command tell FL hook to stop processing this
+				// chat string.
+				returnCode = SKIPPLUGINS_NOFUNCTIONCALL; // we handled the command, return immediatly
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 // Load Settings
 void LoadSettings()
 {
-	auto config = Serializer::JsonToObject<Config>();
-	config = std::make_unique<Config>(config);
+	returnCode = DEFAULT_RETURNCODE;
+	char szCurDir[MAX_PATH];
+	GetCurrentDirectory(sizeof(szCurDir), szCurDir);
+	string cfg_file = string(szCurDir) + "\\flhook_plugins\\bounty_hunt.cfg";
+	INI_Reader ini;
+	if (ini.open(cfg_file.c_str(), false))
+	{
+		while (ini.read_header())
+		{
+			if (ini.is_header("general"))
+			{
+				while (ini.read_value())
+				{
+					if (ini.is_value("levelProtect"))
+					{
+						levelProtect = ini.get_value_int(0);
+					}
+					else if (ini.is_value("min_hunt_time"))
+					{
+						minimalHuntTime = ini.get_value_int(0);
+					}
+					else if (ini.is_value("max_hunt_time"))
+					{
+						minimalHuntTime = ini.get_value_int(0);
+					}
+					else if (ini.is_value("default_hunt_time"))
+					{
+						defaultHuntTime = ini.get_value_int(0);
+					}
+				}
+			}
+		}
+		ini.close();
+	}
 }
 
 
@@ -345,8 +410,10 @@ EXPORT PLUGIN_INFO* Get_PluginInfo()
 	p_PI->ePluginReturnCode = &returnCode;
 	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&SendDeathMsg, PLUGIN_SendDeathMsg, 0));
 	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&LoadSettings, PLUGIN_LoadSettings, 0));
+	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&BhTimeOutCheck, PLUGIN_HkTimerCheckKick, 0));
 	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&DisConnect, PLUGIN_HkIServerImpl_DisConnect, 0));
 	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&CharacterSelect, PLUGIN_HkIServerImpl_CharacterSelect, 0));
+	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&UserCmd_Process, PLUGIN_UserCmd_Process, 0));
 
 	return p_PI;
 }
