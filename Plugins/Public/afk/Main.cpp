@@ -20,19 +20,9 @@
  * @paragraph ipc IPC Interfaces Exposed
  * This plugin does not expose any functionality.
  */
-#include <windows.h>
-#include <stdio.h>
-#include <string>
-#include <time.h>
-#include <math.h>
-#include <list>
-#include <map>
 #include <unordered_set>
-#include <algorithm>
 #include <FLHook.h>
 #include <plugin.h>
-#include <PluginUtilities.h>
-#include <hookext_exports.h>
 
 unordered_set<uint> awayClients;
 PLUGIN_RETURNCODE returnCode;
@@ -65,7 +55,7 @@ bool UserCmdBack(uint client, const wstring &cmd, const wstring &param, const wc
 {
 	if (awayClients.find(client) == awayClients.end())
 	{
-		return;
+		return false;
 	}
 
 	uint systemId;
@@ -88,18 +78,18 @@ void ClearClientInfo(uint client)
 
 // Hook on chat being sent (This gets called twice with the client and to
 // swapped
-void __stdcall Cb_SendChat(uint client, uint to, const uint& size, void** rdl)
+void __stdcall Cb_SendChat(uint client, uint to, uint size, void* rdl)
 {
 	if (awayClients.find(to) != awayClients.end())
 		PrintUserCmdText(client, L"This user is away from keyboard.");
 }
 
 // Hooks on chat being submitted
-void __stdcall SubmitChat(uint client, const unsigned long& lP1, void const** rdlReader, uint to,
-    const int& iP2)
+void __stdcall SubmitChat(struct CHAT_ID cId, unsigned long lP1, void const* rdlReader, struct CHAT_ID cIdToto,
+    int iP2)
 {
-	if (awayClients.find(client) !=awayClients.end())
-		UserCmdBack(client,L"",L"",L"");
+	if (awayClients.find(cId.iID) !=awayClients.end())
+		UserCmdBack(cId.iID,L"",L"",L"");
 }
 typedef bool(*_UserCmdProc)(uint, const wstring &, const wstring &, const wchar_t*);
 
@@ -126,8 +116,8 @@ EXPORT PLUGIN_INFO* Get_PluginInfo()
 {
 	PLUGIN_INFO* p_PI = new PLUGIN_INFO();
 
-	p_PI->sName ="AFK";
-	p_PI->sShortName ="afk";
+	p_PI->sName = "AFK";
+	p_PI->sShortName = "afk";
 	p_PI->bMayUnload = true;
 	p_PI->ePluginReturnCode = &returnCode;
 	p_PI->lstHooks.push_back(PLUGIN_HOOKINFO((FARPROC*)&ClearClientInfo, PLUGIN_ClearClientInfo, 0));
