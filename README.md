@@ -35,6 +35,10 @@ How I got it working
 Changelog
 -------
 
+v1.2.0
+Implemented Aingar's FLHook4 plugin ports.
+afk, betting, bountyhunt, deathpenalty, kill_tracker, tax
+
 v1.16
 New racing restart, has 2 starbeams and neutral rep with zoners
 /restart ZoneRacer
