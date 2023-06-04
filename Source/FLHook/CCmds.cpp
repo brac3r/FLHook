@@ -40,7 +40,7 @@ void CCmds::CmdSetCashSec(const wstring &wscCharname, int iAmountCheck, int iAmo
 
 	if (HKSUCCESS(HkGetCash(wscCharname, iCash))) {
 		if (iCash != iAmountCheck)
-			Print(L"ERR Security check failed\n");
+			Print(L"ERR Security check\n");
 		else
 			CmdSetCash(wscCharname, iAmount);
 	}
